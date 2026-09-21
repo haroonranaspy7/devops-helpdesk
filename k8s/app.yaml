@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: helpdesk-web
   namespace: helpdesk
+
+  labels:
+    app: helpdesk-web
 spec:
   selector:
     app: helpdesk-web
@@ -68,7 +71,7 @@ spec:
 
       containers:
         - name: helpdesk-web
-          image: ghcr.io/haroonranaspy7/devops-helpdesk:latest
+          image: ghcr.io/haroonranaspy7/devops-helpdesk:2083431b15c1d0c9b2b03e60930ac87a60ae40c6
           imagePullPolicy: Always
 
           ports:

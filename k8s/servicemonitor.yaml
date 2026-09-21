@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: helpdesk-web
+  namespace: helpdesk
+
+  labels:
+    release: monitoring
+
+spec:
+  selector:
+    matchLabels:
+      app: helpdesk-web
+
+  namespaceSelector:
+    matchNames:
+      - helpdesk
+
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
