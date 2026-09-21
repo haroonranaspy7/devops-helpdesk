@@ -1,4 +1,4 @@
-name: CI
+name: CI and Container Publishing
 
 on:
   push:
@@ -11,10 +11,11 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
-  test-and-build:
-    name: Test and Build
+  test-build-publish:
+    name: Test, Build, and Publish
     runs-on: ubuntu-latest
 
     services:
@@ -38,6 +39,7 @@ jobs:
     env:
       TEST_DATABASE_URL: postgresql+psycopg://helpdesk_user:helpdesk_test_password@localhost:5432/helpdesk_test_db
       SECRET_KEY: github-actions-test-secret
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
 
     steps:
       - name: Check out repository
@@ -81,5 +83,20 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            --tag devops-helpdesk:${{ github.sha }} \
+            --tag "${IMAGE_NAME}:${{ github.sha }}" \
+            --tag "${IMAGE_NAME}:latest" \
             .
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" |
+            docker login ghcr.io \
+              --username "${{ github.actor }}" \
+              --password-stdin
+
+      - name: Publish Docker image
+        if: github.event_name == 'push'
+        run: |
+          docker push "${IMAGE_NAME}:${{ github.sha }}"
+          docker push "${IMAGE_NAME}:latest"
