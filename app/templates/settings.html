@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Settings | IT Helpdesk Platform
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <h2>
+                IT Helpdesk
+            </h2>
+
+            <span>
+                DevOps Platform
+            </span>
+
+        </div>
+
+
+        <nav class="nav">
+
+            <a
+                href="{{ url_for('api.dashboard') }}"
+                class="nav-item"
+            >
+                Dashboard
+            </a>
+
+
+            <a
+                href="{{ url_for('api.dashboard') }}"
+                class="nav-item"
+            >
+                Tickets
+            </a>
+
+
+	    <a
+    		href="{{ url_for('api.dashboard') }}#users"
+    		class="nav-item"
+    		id="users-nav"
+    		style="display: none;"
+	    >
+    		Users
+	    </a>
+
+            <a
+                href="{{ url_for('api.settings') }}"
+                class="nav-item active"
+            >
+                Settings
+            </a>
+
+        </nav>
+
+
+        <!-- PROJECT OWNERSHIP -->
+
+        <div class="sidebar-footer">
+
+            <p>
+                Built by
+            </p>
+
+            <strong>
+                Haroon Rana
+            </strong>
+
+            <span>
+                DevOps Engineer
+            </span>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>
+                    Settings
+                </h1>
+
+                <p>
+                    Personalize your Helpdesk experience
+                </p>
+
+            </div>
+
+
+            <div class="user">
+
+                <div
+                    class="avatar"
+                    id="current-user-avatar"
+                >
+                    H
+                </div>
+
+
+                <div>
+
+                    <strong id="current-username">
+                        Loading...
+                    </strong>
+
+                    <span id="current-user-role">
+                        Loading...
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             APPEARANCE
+             ================================================= -->
+
+        <section class="content-card settings-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Appearance
+                    </h2>
+
+                    <p>
+                        Customize how the platform looks
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-grid">
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Theme
+                        </strong>
+
+                        <p>
+                            Choose your preferred interface theme
+                        </p>
+
+                    </div>
+
+
+                    <select id="theme-setting">
+
+                        <option value="system">
+                            System Default
+                        </option>
+
+                        <option value="light">
+                            Light
+                        </option>
+
+                        <option value="dark">
+                            Dark
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Accent Color
+                        </strong>
+
+                        <p>
+                            Choose the primary interface color
+                        </p>
+
+                    </div>
+
+
+                    <select id="accent-color-setting">
+
+                        <option value="blue">
+                            Blue
+                        </option>
+
+                        <option value="purple">
+                            Purple
+                        </option>
+
+                        <option value="green">
+                            Green
+                        </option>
+
+                        <option value="orange">
+                            Orange
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Compact Mode
+                        </strong>
+
+                        <p>
+                            Reduce spacing to display more information
+                        </p>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="compact-mode-setting"
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             DASHBOARD PERSONALIZATION
+             ================================================= -->
+
+        <section class="content-card settings-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Dashboard
+                    </h2>
+
+                    <p>
+                        Control what appears on your dashboard
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-grid">
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Statistics Cards
+                        </strong>
+
+                        <p>
+                            Show ticket statistics at the top of dashboard
+                        </p>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="show-statistics-setting"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Auto Refresh
+                        </strong>
+
+                        <p>
+                            Automatically refresh ticket information
+                        </p>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="auto-refresh-setting"
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Refresh Interval
+                        </strong>
+
+                        <p>
+                            How often ticket information refreshes
+                        </p>
+
+                    </div>
+
+
+                    <select id="refresh-interval-setting">
+
+                        <option value="30">
+                            30 seconds
+                        </option>
+
+                        <option value="60">
+                            1 minute
+                        </option>
+
+                        <option value="300">
+                            5 minutes
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             TICKET PREFERENCES
+             ================================================= -->
+
+        <section class="content-card settings-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Ticket Preferences
+                    </h2>
+
+                    <p>
+                        Customize how tickets are displayed
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-grid">
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Default Ticket View
+                        </strong>
+
+                        <p>
+                            Select the tickets shown when opening dashboard
+                        </p>
+
+                    </div>
+
+
+                    <select id="default-ticket-view-setting">
+
+                        <option value="all">
+                            All Tickets
+                        </option>
+
+                        <option value="mine">
+                            My Tickets
+                        </option>
+
+                        <option value="assigned">
+                            Assigned To Me
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Tickets Per Page
+                        </strong>
+
+                        <p>
+                            Number of tickets displayed at once
+                        </p>
+
+                    </div>
+
+
+                    <select id="tickets-per-page-setting">
+
+                        <option value="10">
+                            10
+                        </option>
+
+                        <option value="25">
+                            25
+                        </option>
+
+                        <option value="50">
+                            50
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Show Resolved Tickets
+                        </strong>
+
+                        <p>
+                            Include resolved tickets in ticket lists
+                        </p>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="show-resolved-setting"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             NOTIFICATIONS
+             ================================================= -->
+
+        <section class="content-card settings-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Notifications
+                    </h2>
+
+                    <p>
+                        Choose which events should notify you
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-grid">
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Ticket Assignment
+                        </strong>
+
+                        <p>
+                            Notify me when a ticket is assigned to me
+                        </p>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="notify-assignment-setting"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Ticket Status Changes
+                        </strong>
+
+                        <p>
+                            Notify me when ticket status changes
+                        </p>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="notify-status-setting"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+
+                <div class="setting-item">
+
+                    <div>
+
+                        <strong>
+                            Critical Ticket Alerts
+                        </strong>
+
+                        <p>
+                            Receive alerts for critical-priority tickets
+                        </p>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="notify-critical-setting"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             ACCOUNT
+             ================================================= -->
+
+        <section class="content-card settings-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Account & Security
+                    </h2>
+
+                    <p>
+                        Your account information and security settings
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-info-grid">
+
+                <div class="settings-info-item">
+
+                    <span>
+                        Username
+                    </span>
+
+                    <strong id="settings-username">
+                        Loading...
+                    </strong>
+
+                </div>
+
+
+                <div class="settings-info-item">
+
+                    <span>
+                        Email
+                    </span>
+
+                    <strong id="settings-email">
+                        Loading...
+                    </strong>
+
+                </div>
+
+
+                <div class="settings-info-item">
+
+                    <span>
+                        Role
+                    </span>
+
+                    <strong id="settings-role">
+                        Loading...
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-security-actions">
+
+                <button
+                    class="btn btn-primary"
+                    id="change-password-button"
+                    type="button"
+                >
+                    Change Password
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             PROJECT INFORMATION
+             ================================================= -->
+
+        <section class="content-card settings-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        About Platform
+                    </h2>
+
+                    <p>
+                        Project information and ownership
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="settings-info-grid">
+
+
+                <div class="settings-info-item">
+
+                    <span>
+                        Application
+                    </span>
+
+                    <strong>
+                        IT Helpdesk Platform
+                    </strong>
+
+                </div>
+
+
+                <div class="settings-info-item">
+
+                    <span>
+                        Version
+                    </span>
+
+                    <strong>
+                        1.0.0
+                    </strong>
+
+                </div>
+
+
+                <div class="settings-info-item">
+
+                    <span>
+                        Developed By
+                    </span>
+
+                    <strong>
+                        Haroon Rana
+                    </strong>
+
+                </div>
+
+
+                <div class="settings-info-item">
+
+                    <span>
+                        Project
+                    </span>
+
+                    <strong>
+                        DevOps Portfolio Project
+                    </strong>
+
+                </div>
+
+
+                <div class="settings-info-item">
+
+                    <span>
+                        Environment
+                    </span>
+
+                    <strong>
+                        Production Ready
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="project-credit">
+
+                Designed, developed and deployed by
+
+                <strong>
+                    Haroon Rana
+                </strong>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             SAVE SETTINGS
+             ================================================= -->
+
+        <section class="settings-save-bar">
+
+            <div>
+
+                <strong>
+                    Personalization Settings
+                </strong>
+
+                <p id="settings-status">
+                    Changes have not been saved yet.
+                </p>
+
+            </div>
+
+
+            <button
+                class="btn btn-primary"
+                id="save-settings-button"
+                type="button"
+            >
+                Save Changes
+            </button>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/settings.js') }}"
+></script>
+
+
+</body>
+
+</html>

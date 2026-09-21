@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login | IT Helpdesk Platform</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px;
+            margin-bottom: 18px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #error-message {
+            display: none;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-container">
+        <div class="login-card">
+
+            <h1>IT Helpdesk</h1>
+
+            <p class="subtitle">
+                Sign in to your account
+            </p>
+
+            <div id="error-message"></div>
+
+            <form id="login-form">
+
+                <label for="email">Email</label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+                <label for="password">Password</label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                >
+
+                <button type="submit">
+                    Login
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById("login-form");
+        const errorMessage = document.getElementById("error-message");
+
+        loginForm.addEventListener("submit", async event => {
+
+            event.preventDefault();
+
+            errorMessage.style.display = "none";
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            try {
+
+                const response = await fetch("/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorMessage.textContent =
+                        data.error || "Login failed.";
+
+                    errorMessage.style.display = "block";
+                    return;
+                }
+
+                window.location.href = "/dashboard";
+
+            } catch (error) {
+
+                console.error(error);
+
+                errorMessage.textContent =
+                    "Unable to connect to the server.";
+
+                errorMessage.style.display = "block";
+            }
+        });
+    </script>
+
+</body>
+</html>
