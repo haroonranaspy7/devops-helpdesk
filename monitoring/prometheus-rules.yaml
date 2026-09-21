@@ -1,0 +1,93 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: helpdesk-alerts
+  namespace: monitoring
+
+  labels:
+    release: monitoring
+
+spec:
+  groups:
+    - name: helpdesk.application
+
+      rules:
+        - alert: HelpdeskApplicationDown
+
+          expr: |
+            absent(up{namespace="helpdesk"})
+            or
+            max(up{namespace="helpdesk"}) == 0
+
+          for: 2m
+
+          labels:
+            severity: critical
+            application: helpdesk
+
+          annotations:
+            summary: "IT Helpdesk application is unavailable"
+
+            description: >-
+              Prometheus has been unable to scrape the Helpdesk
+              application for at least two minutes.
+
+        - alert: HelpdeskHighServerErrorRate
+
+          expr: |
+            (
+              sum(
+                rate(
+                  helpdesk_http_requests_total{
+                    status=~"5.."
+                  }[5m]
+                )
+              )
+              /
+              clamp_min(
+                sum(
+                  rate(
+                    helpdesk_http_requests_total[5m]
+                  )
+                ),
+                0.001
+              )
+            ) > 0.05
+
+          for: 5m
+
+          labels:
+            severity: warning
+            application: helpdesk
+
+          annotations:
+            summary: "Helpdesk server error rate is high"
+
+            description: >-
+              More than 5 percent of Helpdesk HTTP requests have
+              returned server errors during the last five minutes.
+
+        - alert: HelpdeskHighResponseTime
+
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (le) (
+                rate(
+                  helpdesk_http_request_duration_seconds_bucket[5m]
+                )
+              )
+            ) > 1
+
+          for: 5m
+
+          labels:
+            severity: warning
+            application: helpdesk
+
+          annotations:
+            summary: "Helpdesk response time is high"
+
+            description: >-
+              The Helpdesk 95th-percentile response time has remained
+              above one second for at least five minutes.
