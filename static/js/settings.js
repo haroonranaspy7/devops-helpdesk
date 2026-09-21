@@ -411,40 +411,165 @@ function updateRefreshIntervalState() {
 // MARK SETTINGS AS CHANGED
 // ============================================================
 
+let settingsSaveTimer = null;
+
+
 function markSettingsChanged() {
+    const status = document.getElementById(
+        "settings-status"
+    );
+
+    status.textContent =
+        "Saving changes...";
+
+    if (settingsSaveTimer !== null) {
+        clearTimeout(settingsSaveTimer);
+    }
+
+    settingsSaveTimer = window.setTimeout(
+        () => {
+            saveSettings();
+            settingsSaveTimer = null;
+        },
+        400
+    );
+}
+
+// ============================================================
+// CHANGE PASSWORD
+// ============================================================
+
+const changePasswordModal = document.getElementById(
+    "change-password-modal"
+);
+
+const changePasswordForm = document.getElementById(
+    "change-password-form"
+);
+
+const changePasswordError = document.getElementById(
+    "change-password-error"
+);
+
+const submitChangePasswordButton = document.getElementById(
+    "submit-change-password"
+);
+
+
+function openChangePasswordModal() {
+    changePasswordForm.reset();
+    changePasswordError.textContent = "";
+    changePasswordError.classList.remove("visible");
+
+    changePasswordModal.classList.add("active");
 
     document.getElementById(
-        "settings-status"
-    ).textContent =
-        "You have unsaved changes.";
+        "current-password"
+    ).focus();
 }
 
 
-// ============================================================
-// CHANGE PASSWORD BUTTON
-// ============================================================
-
-function handleChangePassword() {
-
-    document.getElementById(
-        "settings-status"
-    ).textContent =
-        "Password management will be connected to the secure backend endpoint.";
+function closeChangePasswordModal() {
+    changePasswordModal.classList.remove("active");
+    changePasswordForm.reset();
+    changePasswordError.textContent = "";
+    changePasswordError.classList.remove("visible");
 }
 
+
+async function changePassword(event) {
+    event.preventDefault();
+
+    const currentPassword = document.getElementById(
+        "current-password"
+    ).value;
+
+    const newPassword = document.getElementById(
+        "new-password"
+    ).value;
+
+    const confirmPassword = document.getElementById(
+        "confirm-new-password"
+    ).value;
+
+    changePasswordError.textContent = "";
+    changePasswordError.classList.remove("visible");
+
+    if (newPassword !== confirmPassword) {
+        changePasswordError.textContent =
+            "New password and confirmation do not match.";
+
+        changePasswordError.classList.add("visible");
+        return;
+    }
+
+    submitChangePasswordButton.disabled = true;
+    submitChangePasswordButton.textContent =
+        "Changing Password...";
+
+    try {
+        const response = await fetch(
+            "/auth/change-password",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmPassword
+                })
+            }
+        );
+
+        const result = await response.json();
+
+        if (response.status === 401) {
+            window.location.href = "/login";
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                result.error ||
+                "Unable to change password."
+            );
+        }
+
+        closeChangePasswordModal();
+
+        document.getElementById(
+            "settings-status"
+        ).textContent =
+            result.message ||
+            "Password changed successfully.";
+
+    } catch (error) {
+        console.error(
+            "Password change error:",
+            error
+        );
+
+        changePasswordError.textContent =
+            error.message;
+
+        changePasswordError.classList.add(
+            "visible"
+        );
+
+    } finally {
+        submitChangePasswordButton.disabled = false;
+        submitChangePasswordButton.textContent =
+            "Change Password";
+    }
+}
 
 // ============================================================
 // EVENT LISTENERS
 // ============================================================
-
-document
-    .getElementById(
-        "save-settings-button"
-    )
-    .addEventListener(
-        "click",
-        saveSettings
-    );
 
 
 document
@@ -466,10 +591,44 @@ document
     )
     .addEventListener(
         "click",
-        handleChangePassword
+        openChangePasswordModal
     );
 
 
+document
+    .getElementById(
+        "close-change-password-modal"
+    )
+    .addEventListener(
+        "click",
+        closeChangePasswordModal
+    );
+
+
+document
+    .getElementById(
+        "cancel-change-password"
+    )
+    .addEventListener(
+        "click",
+        closeChangePasswordModal
+    );
+
+
+changePasswordForm.addEventListener(
+    "submit",
+    changePassword
+);
+
+
+changePasswordModal.addEventListener(
+    "click",
+    event => {
+        if (event.target === changePasswordModal) {
+            closeChangePasswordModal();
+        }
+    }
+);
 // ============================================================
 // LIVE PREVIEW
 // ============================================================

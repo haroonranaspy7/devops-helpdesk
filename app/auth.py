@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify, session
-from app import db
-from app.models.user import User
+from flask import Blueprint, jsonify, request, session
 
+from app import db
+from app.auth_utils import get_current_user, login_required
+from app.models.user import User
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
 
@@ -95,6 +96,70 @@ def logout():
         "message": "Logout successful"
     }), 200
 
+@auth.route("/change-password", methods=["POST"])
+@login_required
+def change_password():
+    data = request.get_json() or {}
+
+    current_password = data.get("current_password", "")
+    new_password = data.get("new_password", "")
+    confirm_password = data.get("confirm_password", "")
+
+    if not all(
+        isinstance(value, str)
+        for value in (
+            current_password,
+            new_password,
+            confirm_password,
+        )
+    ):
+        return jsonify({
+            "error": "Password values must be text"
+        }), 400
+
+    if (
+        not current_password
+        or not new_password
+        or not confirm_password
+    ):
+        return jsonify({
+            "error": (
+                "Current password, new password, "
+                "and confirmation are required"
+            )
+        }), 400
+
+    if len(new_password) < 8:
+        return jsonify({
+            "error": "New password must be at least 8 characters"
+        }), 400
+
+    if new_password != confirm_password:
+        return jsonify({
+            "error": "New password and confirmation do not match"
+        }), 400
+
+    user = get_current_user()
+
+    if not user.check_password(current_password):
+        return jsonify({
+            "error": "Current password is incorrect"
+        }), 400
+
+    if user.check_password(new_password):
+        return jsonify({
+            "error": (
+                "New password must be different "
+                "from the current password"
+            )
+        }), 400
+
+    user.set_password(new_password)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Password changed successfully"
+    }), 200
 
 @auth.route("/me", methods=["GET"])
 def me():

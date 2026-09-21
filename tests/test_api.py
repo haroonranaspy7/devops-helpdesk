@@ -1265,3 +1265,142 @@ def test_admin_cannot_change_own_role(client, app):
     assert response.get_json()["error"] == (
         "Administrators cannot change their own role"
     )
+def test_change_password_requires_authentication(client):
+    response = client.post(
+        "/auth/change-password",
+        json={
+            "current_password": "OldPassword123",
+            "new_password": "NewPassword123",
+            "confirm_password": "NewPassword123",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.get_json()["error"] == (
+        "Authentication required"
+    )
+
+
+def test_user_can_change_password(client):
+    register_response = client.post(
+        "/auth/register",
+        json={
+            "username": "passworduser",
+            "email": "passworduser@example.com",
+            "password": "OldPassword123",
+        },
+    )
+
+    assert register_response.status_code == 201
+
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": "passworduser@example.com",
+            "password": "OldPassword123",
+        },
+    )
+
+    assert login_response.status_code == 200
+
+    change_response = client.post(
+        "/auth/change-password",
+        json={
+            "current_password": "OldPassword123",
+            "new_password": "NewPassword123",
+            "confirm_password": "NewPassword123",
+        },
+    )
+
+    assert change_response.status_code == 200
+    assert change_response.get_json()["message"] == (
+        "Password changed successfully"
+    )
+
+    client.post("/auth/logout")
+
+    old_login_response = client.post(
+        "/auth/login",
+        json={
+            "email": "passworduser@example.com",
+            "password": "OldPassword123",
+        },
+    )
+
+    assert old_login_response.status_code == 401
+
+    new_login_response = client.post(
+        "/auth/login",
+        json={
+            "email": "passworduser@example.com",
+            "password": "NewPassword123",
+        },
+    )
+
+    assert new_login_response.status_code == 200
+
+
+def test_change_password_rejects_incorrect_current_password(client):
+    client.post(
+        "/auth/register",
+        json={
+            "username": "incorrectpassworduser",
+            "email": "incorrectpassword@example.com",
+            "password": "OriginalPassword123",
+        },
+    )
+
+    client.post(
+        "/auth/login",
+        json={
+            "email": "incorrectpassword@example.com",
+            "password": "OriginalPassword123",
+        },
+    )
+
+    response = client.post(
+        "/auth/change-password",
+        json={
+            "current_password": "WrongPassword123",
+            "new_password": "NewPassword123",
+            "confirm_password": "NewPassword123",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == (
+        "Current password is incorrect"
+    )
+
+
+def test_change_password_rejects_mismatched_confirmation(client):
+    client.post(
+        "/auth/register",
+        json={
+            "username": "mismatchpassworduser",
+            "email": "mismatchpassword@example.com",
+            "password": "OriginalPassword123",
+        },
+    )
+
+    client.post(
+        "/auth/login",
+        json={
+            "email": "mismatchpassword@example.com",
+            "password": "OriginalPassword123",
+        },
+    )
+
+    response = client.post(
+        "/auth/change-password",
+        json={
+            "current_password": "OriginalPassword123",
+            "new_password": "NewPassword123",
+            "confirm_password": "DifferentPassword123",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == (
+        "New password and confirmation do not match"
+    )
