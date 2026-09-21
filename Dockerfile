@@ -7,21 +7,29 @@ ENV HOME=/home/appuser
 
 WORKDIR /app
 
-RUN addgroup --system appgroup \
-    && adduser --system --ingroup appgroup appuser \
+RUN addgroup \
+        --system \
+        --gid 10001 \
+        appgroup \
+    && adduser \
+        --system \
+        --uid 10001 \
+        --ingroup appgroup \
+        --home /home/appuser \
+        appuser \
     && mkdir -p /home/appuser \
-    && chown -R appuser:appgroup /home/appuser
+    && chown -R 10001:10001 /home/appuser
 
 COPY requirements.txt .
 
 RUN pip install --upgrade pip \
     && pip install -r requirements.txt
 
-COPY --chown=appuser:appgroup . .
+COPY --chown=10001:10001 . .
 
 RUN chmod +x /app/docker-entrypoint.sh
 
-USER appuser
+USER 10001:10001
 
 EXPOSE 5000
 
