@@ -1422,3 +1422,27 @@ def test_metrics_endpoint(client):
         "helpdesk_http_request_duration_seconds"
         in metrics_data
     )
+def test_health_request_writes_structured_log(
+    client,
+    caplog
+):
+    with caplog.at_level("INFO"):
+        response = client.get("/health")
+
+    assert response.status_code == 200
+
+    request_logs = [
+        record
+        for record in caplog.records
+        if record.getMessage() == "http_request"
+    ]
+
+    assert request_logs
+
+    latest_log = request_logs[-1]
+
+    assert latest_log.event == "http_request"
+    assert latest_log.method == "GET"
+    assert latest_log.endpoint == "/health"
+    assert latest_log.status == 200
+    assert latest_log.duration_seconds >= 0

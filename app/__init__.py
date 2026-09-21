@@ -10,6 +10,8 @@ from prometheus_client import (
     generate_latest
 )
 
+from app.logging_config import configure_logging
+
 
 db = SQLAlchemy()
 
@@ -36,6 +38,8 @@ HTTP_REQUEST_DURATION_SECONDS = Histogram(
 
 
 def create_app(testing=False):
+    configure_logging()
+
     app = Flask(
         __name__,
         static_folder="../static",
@@ -89,7 +93,7 @@ def create_app(testing=False):
         )
 
     @app.after_request
-    def record_request_metrics(response):
+    def record_request_observability(response):
         endpoint = (
             request.url_rule.rule
             if request.url_rule
@@ -111,6 +115,24 @@ def create_app(testing=False):
             method=request.method,
             endpoint=endpoint
         ).observe(duration)
+
+        app.logger.info(
+            "http_request",
+            extra={
+                "event": "http_request",
+                "method": request.method,
+                "endpoint": endpoint,
+                "path": request.path,
+                "status": response.status_code,
+                "duration_seconds": round(
+                    duration,
+                    6
+                ),
+                "remote_address": (
+                    request.remote_addr
+                )
+            }
+        )
 
         return response
 
