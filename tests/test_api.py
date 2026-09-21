@@ -1404,3 +1404,21 @@ def test_change_password_rejects_mismatched_confirmation(client):
     assert response.get_json()["error"] == (
         "New password and confirmation do not match"
     )
+def test_metrics_endpoint(client):
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+
+    metrics_data = response.get_data(
+        as_text=True
+    )
+
+    assert (
+        "helpdesk_http_requests_total"
+        in metrics_data
+    )
+
+    assert (
+        "helpdesk_http_request_duration_seconds"
+        in metrics_data
+    )
