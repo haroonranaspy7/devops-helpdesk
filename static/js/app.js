@@ -159,6 +159,10 @@ function updateUserInterface() {
         "users-nav"
     );
 
+    const invitationsNav = document.getElementById(
+        "invitations-nav"
+    );
+
     const userManagementSection = document.getElementById(
         "user-management-section"
     );
@@ -188,14 +192,21 @@ function updateUserInterface() {
         if (usersNav) {
             usersNav.style.display = "";
         }
+
+        if (invitationsNav) {
+            invitationsNav.style.display = "";
+        }
     } else {
         if (usersNav) {
             usersNav.style.display = "none";
         }
 
+        if (invitationsNav) {
+            invitationsNav.style.display = "none";
+        }
+
         if (userManagementSection) {
-            userManagementSection.style.display =
-                "none";
+            userManagementSection.style.display = "none";
         }
     }
 }

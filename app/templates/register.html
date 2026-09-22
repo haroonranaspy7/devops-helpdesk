@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create account | IT Helpdesk Platform</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 24px 16px;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 440px;
+            padding: 32px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .subtitle, .login-link {
+            text-align: center;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px;
+            margin-bottom: 18px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        a {
+            color: #2563eb;
+        }
+
+        #error-message {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        #success-message {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 6px;
+        }
+
+        input:focus-visible, button:focus-visible, a:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <main class="register-card">
+        <h1>IT Helpdesk</h1>
+        <p class="subtitle">Create your account to submit and track tickets.</p>
+
+        <div id="error-message" class="message" role="alert" hidden></div>
+        <div id="success-message" class="message" role="status" hidden></div>
+
+        <form id="register-form" method="post" action="/auth/register">
+            <label for="username">Username</label>
+            <input
+                id="username"
+                name="username"
+                type="text"
+                autocomplete="username"
+                maxlength="100"
+                required
+            >
+
+            <label for="email">Email</label>
+            <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                maxlength="255"
+                required
+            >
+
+            <label for="password">Password</label>
+            <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="new-password"
+                minlength="8"
+                placeholder="At least 8 characters"
+                required
+            >
+
+            <label for="confirm-password">Confirm password</label>
+            <input
+                id="confirm-password"
+                name="confirm-password"
+                type="password"
+                autocomplete="new-password"
+                minlength="8"
+                required
+            >
+<label for="invitation-code">Invitation code</label>
+<input
+    id="invitation-code"
+    name="invitation_code"
+    type="text"
+    maxlength="128"
+    autocomplete="off"
+    spellcheck="false"
+    autocapitalize="none"
+    placeholder="Enter the code provided by your administrator"
+    required
+>
+
+            <button id="register-button" type="submit">
+                Create account
+            </button>
+        </form>
+
+        <p class="login-link">
+            Already have an account?
+            <a href="/login">Sign in</a>
+        </p>
+
+        <noscript>Enable JavaScript to create an account.</noscript>
+    </main>
+
+    <script>
+        const form = document.getElementById("register-form");
+        const button = document.getElementById("register-button");
+        const errorBox = document.getElementById("error-message");
+        const successBox = document.getElementById("success-message");
+
+        function showError(message) {
+            errorBox.textContent = message;
+            errorBox.hidden = false;
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            if (button.disabled) return;
+
+            errorBox.hidden = true;
+            successBox.hidden = true;
+
+            const username = document.getElementById("username").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmation = document.getElementById("confirm-password").value;
+
+            if (!username || !email) {
+                showError("Username and email are required.");
+                return;
+            }
+
+            if (password !== confirmation) {
+                showError("Passwords do not match.");
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Creating account...";
+
+            try {
+                const response = await fetch("/auth/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+body: JSON.stringify({
+    username,
+    email,
+    password,
+    invitation_code: document
+        .getElementById("invitation-code")
+        .value
+        .trim()
+})
+                });
+
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    showError(data.error || "Registration failed. Please try again.");
+                    return;
+                }
+
+                form.reset();
+                form.hidden = true;
+                successBox.textContent =
+                    "Account created successfully! Use the Sign in link below to log in.";
+                successBox.hidden = false;
+            } catch (error) {
+                showError(
+                    "Unable to confirm registration. Check your connection. " +
+                    "If the account was created, try signing in."
+                );
+            } finally {
+                button.disabled = false;
+                button.textContent = "Create account";
+            }
+        });
+    </script>
+</body>
+</html>

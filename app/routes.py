@@ -1,4 +1,11 @@
-from flask import Blueprint, jsonify, request, render_template
+from flask import (
+    Blueprint,
+    jsonify,
+    request,
+    render_template,
+    redirect,
+    url_for
+)
 from sqlalchemy import text
 
 from app import db
@@ -30,6 +37,16 @@ def settings():
 def login_page():
     return render_template("login.html")
 
+@api.get("/register")
+def register_page():
+    return render_template("register.html")
+
+@api.get("/setup")
+def setup_page():
+    if User.query.filter_by(role="ADMIN").first():
+        return redirect(url_for("api.login_page"))
+
+    return render_template("setup.html")
 
 # ============================================================
 # BASIC / HEALTH ROUTES
@@ -651,3 +668,7 @@ def delete_ticket(ticket_id):
         "message": "Ticket deleted successfully",
         "ticket_id": ticket_id
     }), 200
+@api.get("/admin/invitations")
+@role_required("ADMIN")
+def invitations_page():
+    return render_template("invitations.html")

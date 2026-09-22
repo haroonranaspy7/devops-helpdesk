@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Initial Setup | IT Helpdesk</title>
+</head>
+<body>
+    <main>
+        <h1>Create the first administrator</h1>
+        <p>This setup is available only until an administrator account exists.</p>
+
+        <p id="message" role="alert"></p>
+
+        <form id="setup-form">
+            <label for="setup-token">Setup token</label>
+            <input id="setup-token" name="setup-token"
+                   type="password"
+                   autocomplete="off" required>
+	    <label for="username">Username</label>
+            <input id="username" name="username"
+                   type="text" maxlength="100"
+                   autocomplete="username" required>
+
+            <label for="email">Email</label>
+            <input id="email" name="email"
+                   type="email" maxlength="255"
+                   autocomplete="email" required>
+
+            <label for="password">Password</label>
+            <input id="password" name="password"
+                   type="password" minlength="8"
+                   autocomplete="new-password" required>
+
+            <label for="confirm-password">Confirm password</label>
+            <input id="confirm-password" name="confirm-password"
+                   type="password" minlength="8"
+                   autocomplete="new-password" required>
+
+            <button type="submit">Create administrator</button>
+        </form>
+    </main>
+
+    <script>
+        const form = document.getElementById("setup-form");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            message.textContent = "";
+            const setupToken =
+                document.getElementById("setup-token").value;
+            const username = document.getElementById("username").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword =
+                document.getElementById("confirm-password").value;
+
+            if (password !== confirmPassword) {
+                message.textContent = "Passwords do not match.";
+                return;
+            }
+
+            const response = await fetch("/auth/setup/initial-admin", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                setup_token: setupToken,
+                username,
+                email,
+                password
+	    })
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                message.textContent =
+                    data.error || "Setup failed. Please try again.";
+                return;
+            }
+
+            window.location.href = "/dashboard";
+        });
+    </script>
+</body>
+</html>

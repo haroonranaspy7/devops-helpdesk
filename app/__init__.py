@@ -77,6 +77,9 @@ def create_app(testing=False):
         "SECRET_KEY",
         "dev-secret-key-change-me"
     )
+    app.config["INITIAL_SETUP_TOKEN"] = os.getenv(
+        "INITIAL_SETUP_TOKEN"
+    )
 
     db.init_app(app)
 

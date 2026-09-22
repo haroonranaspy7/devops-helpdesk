@@ -7,7 +7,9 @@ from app.models.ticket import Ticket
 @pytest.fixture
 def app():
     app = create_app(testing=True)
-
+    app.config["INITIAL_SETUP_TOKEN"] = (
+        "test-initial-setup-token"
+    )
     with app.app_context():
         db.drop_all()
         db.create_all()
@@ -23,19 +25,31 @@ def client(app):
     return app.test_client()
 
 
+
+def create_test_user(client, username, email, password, role="USER"):
+    """Create database data for tests without using public registration."""
+    with client.application.app_context():
+        user = User(
+            username=username,
+            email=email,
+            role=role
+        )
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+
+        return user
+
+
 @pytest.fixture
 def authenticated_client(client):
     # Create test user
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "testuser",
-            "email": "test@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="testuser",
+        email="test@example.com",
+        password="TestPassword123"
     )
-
-    assert response.status_code == 201
 
     # Login
     response = client.post(
@@ -67,8 +81,6 @@ def test_create_ticket(authenticated_client):
             "priority": "HIGH"
         }
     )
-
-    assert response.status_code == 201
 
     data = response.get_json()
 
@@ -172,15 +184,12 @@ def test_technician_can_update_assigned_ticket(authenticated_client, app):
     assert response.get_json()["message"] == "Ticket updated successfully"
 def test_technician_can_update_user_ticket_with_separate_session(client, app):
     # Create the normal user
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "user1",
-            "email": "user1@example.com",
-            "password": "UserPassword123"
-        }
+    create_test_user(
+        client,
+        username="user1",
+        email="user1@example.com",
+        password="UserPassword123"
     )
-    assert response.status_code == 201
 
     # Log in as the normal user
     response = client.post(
@@ -209,15 +218,12 @@ def test_technician_can_update_user_ticket_with_separate_session(client, app):
     assert response.status_code == 200
 
     # Create a separate technician account
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "technician1",
-            "email": "technician@example.com",
-            "password": "TechPassword123"
-        }
+    create_test_user(
+        client,
+        username="technician1",
+        email="technician@example.com",
+        password="TechPassword123"
     )
-    assert response.status_code == 201
 
     # Change technician's role to TECHNICIAN
     with app.app_context():
@@ -258,15 +264,12 @@ def test_technician_can_update_user_ticket_with_separate_session(client, app):
 
 def test_user_cannot_update_other_users_ticket(client):
     # Create first user
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "user1",
-            "email": "user1@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="user1",
+        email="user1@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Login as first user
     response = client.post(
@@ -296,15 +299,12 @@ def test_user_cannot_update_other_users_ticket(client):
     assert response.status_code == 200
 
     # Create second user
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "user2",
-            "email": "user2@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="user2",
+        email="user2@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Login as second user
     response = client.post(
@@ -392,13 +392,11 @@ def test_user_cannot_assign_ticket(authenticated_client, app):
         "/auth/logout"
     )
 
-    response = authenticated_client.post(
-        "/auth/register",
-        json={
-            "username": "technician1",
-            "email": "technician1@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        authenticated_client,
+        username="technician1",
+        email="technician1@example.com",
+        password="TestPassword123"
     )
     assert response.status_code == 201
 
@@ -433,15 +431,12 @@ def test_user_cannot_assign_ticket(authenticated_client, app):
     )
 def test_technician_cannot_update_unassigned_ticket(client, app):
     # Create user
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "ticketowner",
-            "email": "owner@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="ticketowner",
+        email="owner@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Login as user
     response = client.post(
@@ -470,13 +465,11 @@ def test_technician_cannot_update_unassigned_ticket(client, app):
     client.post("/auth/logout")
 
     # Create technician
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "technician2",
-            "email": "technician2@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="technician2",
+        email="technician2@example.com",
+        password="TestPassword123"
     )
     assert response.status_code == 201
 
@@ -511,15 +504,12 @@ def test_technician_cannot_update_unassigned_ticket(client, app):
     assert response.get_json()["error"] == "Access denied"
 def test_admin_can_assign_ticket_to_technician(client, app):
     # Create ticket owner
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "ticketowner",
-            "email": "admin_test_owner@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="ticketowner",
+        email="admin_test_owner@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Login as ticket owner
     response = client.post(
@@ -549,15 +539,12 @@ def test_admin_can_assign_ticket_to_technician(client, app):
     assert response.status_code == 200
 
     # Create technician
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "assignmenttech",
-            "email": "assignmenttech@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="assignmenttech",
+        email="assignmenttech@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Promote to TECHNICIAN
     with app.app_context():
@@ -569,15 +556,12 @@ def test_admin_can_assign_ticket_to_technician(client, app):
         db.session.commit()
 
     # Create admin
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "admin1",
-            "email": "admin1@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="admin1",
+        email="admin1@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Promote to ADMIN
     with app.app_context():
@@ -614,15 +598,12 @@ def test_admin_can_assign_ticket_to_technician(client, app):
         assert ticket.assigned_to_id == technician_id
 def test_technician_can_view_assigned_tickets(client, app):
     # Create ticket owner
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "viewowner",
-            "email": "viewowner@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="viewowner",
+        email="viewowner@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Login as owner
     response = client.post(
@@ -652,15 +633,12 @@ def test_technician_can_view_assigned_tickets(client, app):
     assert response.status_code == 200
 
     # Create technician
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "viewtechnician",
-            "email": "viewtechnician@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="viewtechnician",
+        email="viewtechnician@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Promote to TECHNICIAN and assign the ticket
     with app.app_context():
@@ -697,15 +675,12 @@ def test_technician_can_view_assigned_tickets(client, app):
     assert tickets[0]["assigned_to"]["id"] == technician_id
 def test_admin_can_view_all_tickets(client, app):
     # Create first user
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "adminowner1",
-            "email": "adminowner1@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="adminowner1",
+        email="adminowner1@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Login as first user
     client.post(
@@ -730,13 +705,11 @@ def test_admin_can_view_all_tickets(client, app):
     client.post("/auth/logout")
 
     # Create second user
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "adminowner2",
-            "email": "adminowner2@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="adminowner2",
+        email="adminowner2@example.com",
+        password="TestPassword123"
     )
     assert response.status_code == 201
 
@@ -763,13 +736,11 @@ def test_admin_can_view_all_tickets(client, app):
     client.post("/auth/logout")
 
     # Create admin
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "viewadmin",
-            "email": "viewadmin@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="viewadmin",
+        email="viewadmin@example.com",
+        password="TestPassword123"
     )
     assert response.status_code == 201
 
@@ -801,15 +772,12 @@ def test_admin_can_view_all_tickets(client, app):
     assert len(tickets) == 2
 def test_technician_can_view_assigned_ticket(client, app):
     # Create ticket owner
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "singleowner",
-            "email": "singleowner@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="singleowner",
+        email="singleowner@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Login as owner
     client.post(
@@ -836,13 +804,11 @@ def test_technician_can_view_assigned_ticket(client, app):
     client.post("/auth/logout")
 
     # Create technician
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "singletech",
-            "email": "singletech@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="singletech",
+        email="singletech@example.com",
+        password="TestPassword123"
     )
     assert response.status_code == 201
 
@@ -881,15 +847,12 @@ def test_technician_can_view_assigned_ticket(client, app):
     assert ticket_data["assigned_to"]["id"] == technician_id
 def test_technician_can_view_unassigned_ticket(client, app):
     # Create ticket owner
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "viewowner",
-            "email": "viewowner@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="viewowner",
+        email="viewowner@example.com",
+        password="TestPassword123"
     )
-    assert response.status_code == 201
 
     # Login as owner
     response = client.post(
@@ -917,13 +880,11 @@ def test_technician_can_view_unassigned_ticket(client, app):
     client.post("/auth/logout")
 
     # Create technician
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "viewtech",
-            "email": "viewtech@example.com",
-            "password": "TestPassword123"
-        }
+    create_test_user(
+        client,
+        username="viewtech",
+        email="viewtech@example.com",
+        password="TestPassword123"
     )
     assert response.status_code == 201
 
@@ -968,8 +929,6 @@ def test_user_cannot_delete_ticket(authenticated_client):
         }
     )
 
-    assert response.status_code == 201
-
     ticket_id = response.get_json()["ticket_id"]
 
     response = authenticated_client.delete(
@@ -984,16 +943,12 @@ def test_user_cannot_delete_ticket(authenticated_client):
 
 
 def test_admin_can_delete_ticket(client, app):
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "admin",
-            "email": "admin@example.com",
-            "password": "AdminPassword123"
-        }
+    create_test_user(
+        client,
+        username="admin",
+        email="admin@example.com",
+        password="AdminPassword123"
     )
-
-    assert response.status_code == 201
 
     with app.app_context():
         admin = User.query.filter_by(
@@ -1023,8 +978,6 @@ def test_admin_can_delete_ticket(client, app):
         }
     )
 
-    assert response.status_code == 201
-
     ticket_id = response.get_json()["ticket_id"]
 
     response = client.delete(
@@ -1038,16 +991,12 @@ def test_admin_can_delete_ticket(client, app):
     assert data["message"] == "Ticket deleted successfully"
     assert data["ticket_id"] == ticket_id
 def create_admin(client, app):
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "testadmin",
-            "email": "testadmin@example.com",
-            "password": "AdminPassword123"
-        }
+    create_test_user(
+        client,
+        username="testadmin",
+        email="testadmin@example.com",
+        password="AdminPassword123"
     )
-
-    assert response.status_code == 201
 
     with app.app_context():
         admin = User.query.filter_by(
@@ -1072,16 +1021,12 @@ def create_admin(client, app):
 def test_admin_can_list_users(client, app):
     create_admin(client, app)
 
-    response = client.post(
-        "/auth/register",
-        json={
-            "username": "normaluser",
-            "email": "normaluser@example.com",
-            "password": "UserPassword123"
-        }
+    create_test_user(
+        client,
+        username="normaluser",
+        email="normaluser@example.com",
+        password="UserPassword123"
     )
-
-    assert response.status_code == 201
 
     response = client.get("/admin/users")
 
@@ -1121,8 +1066,6 @@ def test_admin_can_create_technician(client, app):
             "role": "TECHNICIAN"
         }
     )
-
-    assert response.status_code == 201
 
     data = response.get_json()
 
@@ -1282,16 +1225,12 @@ def test_change_password_requires_authentication(client):
 
 
 def test_user_can_change_password(client):
-    register_response = client.post(
-        "/auth/register",
-        json={
-            "username": "passworduser",
-            "email": "passworduser@example.com",
-            "password": "OldPassword123",
-        },
+    create_test_user(
+        client,
+        username="passworduser",
+        email="passworduser@example.com",
+        password="OldPassword123"
     )
-
-    assert register_response.status_code == 201
 
     login_response = client.post(
         "/auth/login",
@@ -1341,13 +1280,11 @@ def test_user_can_change_password(client):
 
 
 def test_change_password_rejects_incorrect_current_password(client):
-    client.post(
-        "/auth/register",
-        json={
-            "username": "incorrectpassworduser",
-            "email": "incorrectpassword@example.com",
-            "password": "OriginalPassword123",
-        },
+    create_test_user(
+        client,
+        username="incorrectpassworduser",
+        email="incorrectpassword@example.com",
+        password="OriginalPassword123"
     )
 
     client.post(
@@ -1374,13 +1311,11 @@ def test_change_password_rejects_incorrect_current_password(client):
 
 
 def test_change_password_rejects_mismatched_confirmation(client):
-    client.post(
-        "/auth/register",
-        json={
-            "username": "mismatchpassworduser",
-            "email": "mismatchpassword@example.com",
-            "password": "OriginalPassword123",
-        },
+    create_test_user(
+        client,
+        username="mismatchpassworduser",
+        email="mismatchpassword@example.com",
+        password="OriginalPassword123"
     )
 
     client.post(
@@ -1446,3 +1381,80 @@ def test_health_request_writes_structured_log(
     assert latest_log.endpoint == "/health"
     assert latest_log.status == 200
     assert latest_log.duration_seconds >= 0
+def test_initial_admin_setup_is_one_time(client):
+    response = client.post(
+        "/auth/setup/initial-admin",
+        json={
+            "setup_token": "test-initial-setup-token",
+	    "username": "firstadmin",
+            "email": "firstadmin@example.com",
+            "password": "AdminPassword123"
+        }
+    )
+
+    assert response.status_code == 201
+    assert response.get_json()["user"]["role"] == "ADMIN"
+
+    response = client.post(
+        "/auth/setup/initial-admin",
+        json={
+            "setup_token": "test-initial-setup-token",
+	    "username": "secondadmin",
+            "email": "secondadmin@example.com",
+            "password": "AdminPassword123"
+        }
+    )
+
+    assert response.status_code == 403
+
+
+def test_registration_requires_an_invitation(client):
+    response = client.post(
+        "/auth/register",
+        json={
+	    "username": "noinvite",
+            "email": "noinvite@example.com",
+            "password": "UserPassword123"
+        }
+    )
+
+    assert response.status_code == 400
+
+
+def test_admin_invitation_creates_technician(client):
+    response = client.post(
+        "/auth/setup/initial-admin",
+        json={
+            "setup_token": "test-initial-setup-token",
+            "username": "admin",
+            "email": "admin@example.com",
+            "password": "AdminPassword123"
+        }
+    )
+
+    assert response.status_code == 201
+
+    response = client.post(
+        "/auth/invitations",
+        json={
+            "role": "TECHNICIAN",
+            "email": "tech@example.com"
+        }
+    )
+
+    assert response.status_code == 201
+
+    code = response.get_json()["invitation"]["code"]
+
+    response = client.post(
+        "/auth/register",
+        json={
+            "username": "technician",
+            "email": "tech@example.com",
+            "password": "TechPassword123",
+            "invitation_code": code
+        }
+    )
+
+    assert response.status_code == 201
+    assert response.get_json()["user"]["role"] == "TECHNICIAN"

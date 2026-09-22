@@ -59,6 +59,11 @@ spec:
               done
 
           env:
+            - name: INITIAL_SETUP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-initial-setup
+                  key: INITIAL_SETUP_TOKEN
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Invitations | IT Helpdesk</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 24px 16px;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #0f172a;
+        }
+        main {
+            max-width: 760px;
+            margin: auto;
+            padding: 28px;
+            background: white;
+            border-radius: 12px;
+        }
+        label { display: block; margin: 18px 0 6px; }
+        input, select, button {
+            padding: 12px;
+            font: inherit;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+        input, select { width: 100%; }
+        button {
+            margin-top: 16px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+        button:disabled { opacity: .6; cursor: wait; }
+        a { color: #2563eb; }
+        #result {
+            margin-top: 20px;
+            padding: 16px;
+            background: #ecfdf5;
+            border-radius: 8px;
+        }
+        #message { color: #b91c1c; }
+        li {
+            padding: 14px 0;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-wrap: anywhere;
+        }
+        li button { margin: 8px 0 0 12px; }
+    </style>
+</head>
+<body>
+<main>
+    <a href="/dashboard">← Dashboard</a>
+    <h1>Account invitations</h1>
+    <p>Generate a single-use code. Invitations expire after 24 hours.</p>
+
+    <p id="message" role="alert"></p>
+    <form id="invite-form">
+        <label for="role">Account role</label>
+        <select id="role" name="role">
+            <option value="USER">User</option>
+            <option value="TECHNICIAN">Technician</option>
+            <option value="ADMIN">Administrator</option>
+        </select>
+
+        <label for="email">Recipient email (optional)</label>
+        <input
+            id="email"
+            name="email"
+            type="email"
+            maxlength="255"
+            autocomplete="email"
+            placeholder="Leave blank for any email address"
+        >
+
+        <button id="generate" type="submit">
+            Generate invitation
+        </button>
+    </form>
+    <section id="result" hidden>
+        <strong>Invitation created</strong>
+        <p id="details"></p>
+        <label for="code">Copy and share this code privately</label>
+        <input id="code" readonly autocomplete="off" spellcheck="false">
+        <p>The code cannot be displayed again after leaving this page.</p>
+    </section>
+
+    <h2>Latest invitations</h2>
+    <button id="refresh" type="button">Refresh list</button>
+    <ul id="invitations"></ul>
+</main>
+
+<script>
+    const form = document.getElementById("invite-form");
+    const message = document.getElementById("message");
+    const generate = document.getElementById("generate");
+    const result = document.getElementById("result");
+    const list = document.getElementById("invitations");
+
+    async function apiRequest(url, options = {}) {
+        const response = await fetch(url, {
+            ...options,
+            cache: "no-store"
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(data.error || "Request failed. Please try again.");
+        }
+
+        return data;
+    }
+
+    async function loadInvitations() {
+        try {
+            const invitations = await apiRequest("/auth/invitations");
+            list.replaceChildren();
+
+            if (invitations.length === 0) {
+                const item = document.createElement("li");
+                item.textContent = "No invitations yet.";
+                list.append(item);
+                return;
+            }
+
+            for (const invitation of invitations) {
+                const item = document.createElement("li");
+                const text = document.createElement("span");
+
+                text.textContent =
+                    `#${invitation.id} · ${invitation.role} · ` +
+                    `${invitation.email || "Any email"} · ${invitation.status} · ` +
+                    `Expires: ${new Date(invitation.expires_at).toLocaleString()}`;
+
+                item.append(text);
+
+                if (invitation.status === "ACTIVE") {
+                    const revoke = document.createElement("button");
+                    revoke.type = "button";
+                    revoke.textContent = "Revoke";
+
+                    revoke.addEventListener("click", async () => {
+                        revoke.disabled = true;
+                        message.textContent = "";
+
+                        try {
+                            await apiRequest(
+                                `/auth/invitations/${invitation.id}/revoke`,
+                                {
+                                    method: "POST",
+                                    headers: {"Content-Type": "application/json"},
+                                    body: "{}"
+                                }
+                            );
+
+                            if (result.dataset.invitationId === String(invitation.id)) {
+                                result.hidden = true;
+                                document.getElementById("code").value = "";
+                            }
+
+                            await loadInvitations();
+                        } catch (error) {
+                            message.textContent = error.message;
+                            revoke.disabled = false;
+                        }
+                    });
+
+                    item.append(revoke);
+                }
+
+                list.append(item);
+            }
+        } catch (error) {
+            message.textContent = error.message;
+        }
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (generate.disabled) return;
+
+        const role = document.getElementById("role").value;
+        const email = document.getElementById("email").value.trim();
+
+        if (role === "ADMIN" &&
+            !window.confirm("This invitation grants administrator access. Continue?")) {
+            return;
+        }
+
+        generate.disabled = true;
+        message.textContent = "";
+
+        try {
+            const data = await apiRequest("/auth/invitations", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({role, email})
+            });
+
+            const invitation = data.invitation;
+            result.dataset.invitationId = String(invitation.id);
+            document.getElementById("code").value = invitation.code;
+            document.getElementById("details").textContent =
+                `${invitation.role} invitation for ${invitation.email || "any email"}. ` +
+                `Expires: ${new Date(invitation.expires_at).toLocaleString()}`;
+
+            result.hidden = false;
+            await loadInvitations();
+        } catch (error) {
+            message.textContent = error.message;
+        } finally {
+            generate.disabled = false;
+        }
+    });
+
+    document.getElementById("refresh").addEventListener("click", () => {
+        message.textContent = "";
+        loadInvitations();
+    });
+
+    loadInvitations();
+</script>
+</body>
+</html>
