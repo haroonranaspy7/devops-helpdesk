@@ -15,6 +15,7 @@ metadata:
   namespace: helpdesk
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
+    traefik.ingress.kubernetes.io/router.middlewares: helpdesk-redirect-to-https@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
@@ -32,3 +33,13 @@ spec:
                 name: helpdesk-web
                 port:
                   number: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-to-https
+  namespace: helpdesk
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
