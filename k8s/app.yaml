@@ -59,11 +59,6 @@ spec:
               done
 
           env:
-            - name: INITIAL_SETUP_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: helpdesk-initial-setup
-                  key: INITIAL_SETUP_TOKEN
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
@@ -78,7 +73,7 @@ spec:
 
       containers:
         - name: helpdesk-web
-          image: ghcr.io/haroonranaspy7/devops-helpdesk:b6766c167dd84b40cdfb5d18fbe833a8d4620a1c
+          image: ghcr.io/haroonranaspy7/devops-helpdesk:b62e5b826354da31c36d97fa51711d5434577159
           imagePullPolicy: Always
 
           ports:
@@ -91,6 +86,12 @@ spec:
                 secretKeyRef:
                   name: helpdesk-secrets
                   key: DATABASE_URL
+
+            - name: INITIAL_SETUP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-initial-setup
+                  key: INITIAL_SETUP_TOKEN
 
             - name: SECRET_KEY
               valueFrom:
