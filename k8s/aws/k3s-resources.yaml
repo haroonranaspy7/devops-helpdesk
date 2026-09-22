@@ -13,10 +13,17 @@ kind: Ingress
 metadata:
   name: helpdesk-web
   namespace: helpdesk
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - 18-210-115-168.sslip.io
+      secretName: helpdesk-tls
   rules:
-    - http:
+    - host: 18-210-115-168.sslip.io
+      http:
         paths:
           - path: /
             pathType: Prefix
