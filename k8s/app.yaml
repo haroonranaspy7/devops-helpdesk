@@ -6,6 +6,7 @@ metadata:
 
   labels:
     app: helpdesk-web
+
 spec:
   selector:
     app: helpdesk-web
@@ -23,6 +24,7 @@ kind: Deployment
 metadata:
   name: helpdesk-web
   namespace: helpdesk
+
 spec:
   replicas: 1
 
@@ -71,7 +73,7 @@ spec:
 
       containers:
         - name: helpdesk-web
-          image: ghcr.io/haroonranaspy7/devops-helpdesk:2083431b15c1d0c9b2b03e60930ac87a60ae40c6
+          image: ghcr.io/haroonranaspy7/devops-helpdesk:b6766c167dd84b40cdfb5d18fbe833a8d4620a1c
           imagePullPolicy: Always
 
           ports:
@@ -95,6 +97,7 @@ spec:
             httpGet:
               path: /health
               port: http
+
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
@@ -104,6 +107,7 @@ spec:
             httpGet:
               path: /health
               port: http
+
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 3
@@ -113,6 +117,7 @@ spec:
             requests:
               cpu: 100m
               memory: 128Mi
+
             limits:
               cpu: 500m
               memory: 512Mi
@@ -122,9 +127,12 @@ spec:
             runAsUser: 10001
             runAsGroup: 10001
             allowPrivilegeEscalation: false
+
             capabilities:
               drop:
                 - ALL
+
             seccompProfile:
               type: RuntimeDefault
+
       terminationGracePeriodSeconds: 30
