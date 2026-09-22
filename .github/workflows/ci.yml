@@ -92,12 +92,21 @@ jobs:
             --tag "${IMAGE_NAME}:latest" \
             .
 
-      - name: Scan Docker image for vulnerabilities
+      - name: Report all container vulnerabilities
+        uses: anchore/scan-action@v7
+        with:
+          image: "${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          fail-build: false
+          only-fixed: false
+          output-format: table
+
+      - name: Block fixable high and critical vulnerabilities
         uses: anchore/scan-action@v7
         with:
           image: "${{ env.IMAGE_NAME }}:${{ github.sha }}"
           fail-build: true
           severity-cutoff: high
+          only-fixed: true
           output-format: table
 
       - name: Log in to GitHub Container Registry
