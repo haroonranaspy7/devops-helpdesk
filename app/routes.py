@@ -54,12 +54,7 @@ def setup_page():
 
 @api.get("/")
 def home():
-    return jsonify({
-        "application": "IT Helpdesk Platform",
-        "status": "running",
-        "version": "1.0.0"
-    })
-
+    return redirect(url_for("api.login_page"))
 
 @api.get("/health")
 def health():
