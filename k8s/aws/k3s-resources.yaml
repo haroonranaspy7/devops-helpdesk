@@ -20,8 +20,8 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - 18-210-115-168.sslip.io
-      secretName: helpdesk-tls
+        - helpdeskflow.site
+      secretName: helpdeskflow-tls
   rules:
     - host: 18-210-115-168.sslip.io
       http:
